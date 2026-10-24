@@ -1,0 +1,124 @@
+import javafx.application.Application;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.stage.Stage;
+
+public class TipCalculator extends Application {
+
+    @Override
+    public void start(Stage stage) {
+
+        Label title = new Label("Tip Calculator");
+        title.setStyle("-fx-font-size: 24px; -fx-font-weight: bold;");
+
+        Label billLabel = new Label("Bill Amount (₹):");
+        TextField billField = new TextField();
+        billField.setPromptText("Enter bill amount");
+
+        Label tipLabel = new Label("Select Tip Percentage:");
+
+        RadioButton r10 = new RadioButton("10%");
+        RadioButton r15 = new RadioButton("15%");
+        RadioButton r20 = new RadioButton("20%");
+
+        ToggleGroup group = new ToggleGroup();
+        r10.setToggleGroup(group);
+        r15.setToggleGroup(group);
+        r20.setToggleGroup(group);
+        r15.setSelected(true);
+
+        HBox radioBox = new HBox(15, r10, r15, r20);
+        radioBox.setAlignment(Pos.CENTER);
+
+        Label sliderLabel = new Label("Custom Tip: 15%");
+        Slider slider = new Slider(0, 30, 15);
+        slider.setShowTickLabels(true);
+        slider.setShowTickMarks(true);
+        slider.setMajorTickUnit(10);
+
+        Label tipResult = new Label("Tip Amount: ₹0.00");
+        Label totalResult = new Label("Total Bill: ₹0.00");
+
+        Button calculate = new Button("Calculate Tip");
+        Button clear = new Button("Clear");
+
+        // Respond to slider interaction
+        slider.valueProperty().addListener((obs, oldVal, newVal) -> {
+            sliderLabel.setText(
+                "Custom Tip: " + newVal.intValue() + "%"
+            );
+            group.selectToggle(null);
+        });
+
+        // Respond to radio button interaction
+        group.selectedToggleProperty().addListener(
+            (obs, oldVal, newVal) -> {
+                if (newVal == r10) slider.setValue(10);
+                else if (newVal == r15) slider.setValue(15);
+                else if (newVal == r20) slider.setValue(20);
+            }
+        );
+
+        // Respond to Calculate button click
+        calculate.setOnAction(e -> {
+            try {
+                double bill = Double.parseDouble(
+                    billField.getText().trim()
+                );
+
+                if (!Double.isFinite(bill) || bill < 0) {
+                    throw new IllegalArgumentException();
+                }
+
+                double percentage = slider.getValue();
+                double tip = bill * percentage / 100;
+                double total = bill + tip;
+
+                tipResult.setText(
+                    String.format("Tip Amount: ₹%.2f", tip)
+                );
+                totalResult.setText(
+                    String.format("Total Bill: ₹%.2f", total)
+                );
+
+            } catch (IllegalArgumentException ex) {
+                new Alert(
+                    Alert.AlertType.ERROR,
+                    "Please enter a valid non-negative bill amount."
+                ).showAndWait();
+            }
+        });
+
+        // Respond to Clear button click
+        clear.setOnAction(e -> {
+            billField.clear();
+            slider.setValue(15);
+            r15.setSelected(true);
+            tipResult.setText("Tip Amount: ₹0.00");
+            totalResult.setText("Total Bill: ₹0.00");
+        });
+
+        VBox root = new VBox(
+            15, title, billLabel, billField, tipLabel,
+            radioBox, sliderLabel, slider,
+            tipResult, totalResult, calculate, clear
+        );
+
+        root.setPadding(new Insets(25));
+        root.setAlignment(Pos.CENTER);
+        root.setStyle("-fx-background-color: #F1F5F9;");
+
+        Scene scene = new Scene(root, 380, 520);
+
+        stage.setTitle("JavaFX Tip Calculator");
+        stage.setScene(scene);
+        stage.show();
+    }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+}
